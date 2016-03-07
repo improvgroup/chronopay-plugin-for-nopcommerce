@@ -1,0 +1,69 @@
+﻿@{
+    Layout = "";
+}
+@model ConfigurationModel
+@using Nop.Plugin.Payments.ChronoPay.Models;
+@using Nop.Web.Framework;
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <table class="adminContent">
+    <tr>
+        <td colspan="2">
+            <b>Please ensure that nopCommerce primary currency matches ChronoPay currency.</b>            
+        </td>
+    </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.GatewayUrl):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.GatewayUrl)
+                @Html.ValidationMessageFor(model => model.GatewayUrl)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.ProductId):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.ProductId)
+                @Html.ValidationMessageFor(model => model.ProductId)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.ProductName):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.ProductName)
+                @Html.ValidationMessageFor(model => model.ProductName)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.SharedSecrect):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.SharedSecrect)
+                @Html.ValidationMessageFor(model => model.SharedSecrect)
+            </td>
+        </tr>
+        <tr>
+            <td class="adminTitle">
+                @Html.NopLabelFor(model => model.AdditionalFee):
+            </td>
+            <td class="adminData">
+                @Html.EditorFor(model => model.AdditionalFee)
+                @Html.ValidationMessageFor(model => model.AdditionalFee)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <button type="submit" name="save" value="save" class="k-button">
+                    Save</button>
+            </td>
+        </tr>
+    </table>
+    
+}
