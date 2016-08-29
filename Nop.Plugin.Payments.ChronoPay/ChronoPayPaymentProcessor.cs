@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Web.Routing;
 using Nop.Core;
-using Nop.Core.Domain;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
@@ -56,8 +55,7 @@ namespace Nop.Plugin.Payments.ChronoPay
         /// <returns>Process payment result</returns>
         public ProcessPaymentResult ProcessPayment(ProcessPaymentRequest processPaymentRequest)
         {
-            var result = new ProcessPaymentResult();
-            result.NewPaymentStatus = PaymentStatus.Pending;
+            var result = new ProcessPaymentResult { NewPaymentStatus = PaymentStatus.Pending };
             return result;
         }
 
@@ -69,17 +67,18 @@ namespace Nop.Plugin.Payments.ChronoPay
         {
             var gatewayUrl = new Uri(_chronoPayPaymentSettings.GatewayUrl);
 
-            var post = new RemotePost();
-
-            post.FormName = "ChronoPay";
-            post.Url = gatewayUrl.ToString();
-            post.Method = "POST";
+            var post = new RemotePost
+            {
+                FormName = "ChronoPay",
+                Url = gatewayUrl.ToString(),
+                Method = "POST"
+            };
 
             post.Add("product_id", _chronoPayPaymentSettings.ProductId);
             post.Add("product_name", _chronoPayPaymentSettings.ProductName);
-            post.Add("product_price", String.Format(CultureInfo.InvariantCulture, "{0:0.00}", postProcessPaymentRequest.Order.OrderTotal));
+            post.Add("product_price", string.Format(CultureInfo.InvariantCulture, "{0:0.00}", postProcessPaymentRequest.Order.OrderTotal));
             post.Add("product_price_currency", _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId).CurrencyCode);
-            post.Add("cb_url", String.Format("{0}Plugins/PaymentChronoPay/IPNHandler", _webHelper.GetStoreLocation(false)));
+            post.Add("cb_url", string.Format("{0}Plugins/PaymentChronoPay/IPNHandler", _webHelper.GetStoreLocation(false)));
             post.Add("cb_type", "P");
             post.Add("cs1", postProcessPaymentRequest.Order.Id.ToString());
             post.Add("f_name", postProcessPaymentRequest.Order.BillingAddress.FirstName);
@@ -208,10 +207,7 @@ namespace Nop.Plugin.Payments.ChronoPay
                 return false;
 
             //let's ensure that at least 1 minute passed after order is placed
-            if ((DateTime.UtcNow - order.CreatedOnUtc).TotalMinutes < 1)
-                return false;
-
-            return true;
+            return !((DateTime.UtcNow - order.CreatedOnUtc).TotalMinutes < 1);
         }
 
         /// <summary>
@@ -224,7 +220,7 @@ namespace Nop.Plugin.Payments.ChronoPay
         {
             actionName = "Configure";
             controllerName = "PaymentChronoPay";
-            routeValues = new RouteValueDictionary() { { "Namespaces", "Nop.Plugin.Payments.ChronoPay.Controllers" }, { "area", null } };
+            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.ChronoPay.Controllers" }, { "area", null } };
         }
 
         /// <summary>
@@ -237,7 +233,7 @@ namespace Nop.Plugin.Payments.ChronoPay
         {
             actionName = "PaymentInfo";
             controllerName = "PaymentChronoPay";
-            routeValues = new RouteValueDictionary() { { "Namespaces", "Nop.Plugin.Payments.ChronoPay.Controllers" }, { "area", null } };
+            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.ChronoPay.Controllers" }, { "area", null } };
         }
 
         public Type GetControllerType()
@@ -247,7 +243,7 @@ namespace Nop.Plugin.Payments.ChronoPay
 
         public override void Install()
         {
-            var settings = new ChronoPayPaymentSettings()
+            var settings = new ChronoPayPaymentSettings
             {
                 GatewayUrl = "https://secure.chronopay.com/index_shop.cgi",
                 ProductId = "",
@@ -272,7 +268,6 @@ namespace Nop.Plugin.Payments.ChronoPay
             
             base.Install();
         }
-
 
         public override void Uninstall()
         {

@@ -10,13 +10,13 @@ namespace Nop.Plugin.Payments.ChronoPay
         #region Methods
         public static string CalcRequestSign(NameValueCollection reqParams, string sharedSecrect)
         {
-            return CalcMd5Hash(String.Format("{0}-{1}-{2}", reqParams["product_id"], reqParams["product_price"], sharedSecrect));
+            return CalcMd5Hash(string.Format("{0}-{1}-{2}", reqParams["product_id"], reqParams["product_price"], sharedSecrect));
         }
 
         public static bool ValidateResponseSign(NameValueCollection rspParams, string sharedSecrect)
         {
-            string rspSign = rspParams["sign"];
-            if (String.IsNullOrEmpty(rspSign))
+            var rspSign = rspParams["sign"];
+            if (string.IsNullOrEmpty(rspSign))
             {
                 return false;
             }
@@ -29,12 +29,9 @@ namespace Nop.Plugin.Payments.ChronoPay
         {
             using (var cs = MD5.Create())
             {
-                var sb = new StringBuilder();
-                byte[] hash;
+                var sb = new StringBuilder { Length = 0 };
 
-                hash = cs.ComputeHash(Encoding.UTF8.GetBytes(s));
-                sb.Length = 0;
-                foreach (byte b in hash)
+                foreach (var b in cs.ComputeHash(Encoding.UTF8.GetBytes(s)))
                 {
                     sb.Append(b.ToString("x2"));
                 }

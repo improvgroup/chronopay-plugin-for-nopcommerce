@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Web.Mvc;
 using Nop.Core;
-using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.ChronoPay.Models;
 using Nop.Services.Configuration;
+using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Web.Framework.Controllers;
@@ -20,12 +19,14 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly ChronoPayPaymentSettings _chronoPayPaymentSettings;
         private readonly PaymentSettings _paymentSettings;
+        private readonly ILocalizationService _localizationService;
 
         public PaymentChronoPayController(ISettingService settingService, 
             IPaymentService paymentService, IOrderService orderService, 
             IOrderProcessingService orderProcessingService, 
             ChronoPayPaymentSettings chronoPayPaymentSettings,
-            PaymentSettings paymentSettings)
+            PaymentSettings paymentSettings,
+            ILocalizationService localizationService)
         {
             this._settingService = settingService;
             this._paymentService = paymentService;
@@ -33,18 +34,21 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
             this._orderProcessingService = orderProcessingService;
             this._chronoPayPaymentSettings = chronoPayPaymentSettings;
             this._paymentSettings = paymentSettings;
+            this._localizationService = localizationService;
         }
         
         [AdminAuthorize]
         [ChildActionOnly]
         public ActionResult Configure()
         {
-            var model = new ConfigurationModel();
-            model.GatewayUrl = _chronoPayPaymentSettings.GatewayUrl;
-            model.ProductId = _chronoPayPaymentSettings.ProductId;
-            model.ProductName = _chronoPayPaymentSettings.ProductName;
-            model.SharedSecrect = _chronoPayPaymentSettings.SharedSecrect;
-            model.AdditionalFee = _chronoPayPaymentSettings.AdditionalFee;
+            var model = new ConfigurationModel
+            {
+                GatewayUrl = _chronoPayPaymentSettings.GatewayUrl,
+                ProductId = _chronoPayPaymentSettings.ProductId,
+                ProductName = _chronoPayPaymentSettings.ProductName,
+                SharedSecrect = _chronoPayPaymentSettings.SharedSecrect,
+                AdditionalFee = _chronoPayPaymentSettings.AdditionalFee
+            };
 
             return View("~/Plugins/Payments.ChronoPay/Views/PaymentChronoPay/Configure.cshtml", model);
         }
@@ -65,14 +69,15 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
             _chronoPayPaymentSettings.AdditionalFee = model.AdditionalFee;
             _settingService.SaveSetting(_chronoPayPaymentSettings);
 
+            SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
+
             return Configure();
         }
 
         [ChildActionOnly]
         public ActionResult PaymentInfo()
         {
-            var model = new PaymentInfoModel();
-            return View("~/Plugins/Payments.ChronoPay/Views/PaymentChronoPay/PaymentInfo.cshtml", model);
+            return View("~/Plugins/Payments.ChronoPay/Views/PaymentChronoPay/PaymentInfo.cshtml");
         }
 
         [NonAction]
@@ -93,20 +98,16 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
         public ActionResult IPNHandler(FormCollection form)
         {
             var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.ChronoPay") as ChronoPayPaymentProcessor;
-            if (processor == null ||
-                !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
+            if (processor == null || !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
                 throw new NopException("ChronoPay module cannot be loaded");
+            int orderId;
 
-            if (HostedPaymentHelper.ValidateResponseSign(form, _chronoPayPaymentSettings.SharedSecrect))
+            if (HostedPaymentHelper.ValidateResponseSign(form, _chronoPayPaymentSettings.SharedSecrect) && int.TryParse(form["cs1"], out orderId))
             {
-                int orderId;
-                if (Int32.TryParse(form["cs1"], out orderId))
+                var order = _orderService.GetOrderById(orderId);
+                if (order != null && _orderProcessingService.CanMarkOrderAsPaid(order))
                 {
-                    Order order = _orderService.GetOrderById(orderId);
-                    if (order != null && _orderProcessingService.CanMarkOrderAsPaid(order))
-                    {
-                        _orderProcessingService.MarkOrderAsPaid(order);
-                    }
+                    _orderProcessingService.MarkOrderAsPaid(order);
                 }
             }
             return RedirectToAction("Index", "Home", new { area = "" });
