@@ -50,7 +50,7 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
                 AdditionalFee = _chronoPayPaymentSettings.AdditionalFee
             };
 
-            return View("~/Plugins/Payments.ChronoPay/Views/PaymentChronoPay/Configure.cshtml", model);
+            return View("~/Plugins/Payments.ChronoPay/Views/Configure.cshtml", model);
         }
 
         [HttpPost]
@@ -77,7 +77,7 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
         [ChildActionOnly]
         public ActionResult PaymentInfo()
         {
-            return View("~/Plugins/Payments.ChronoPay/Views/PaymentChronoPay/PaymentInfo.cshtml");
+            return View("~/Plugins/Payments.ChronoPay/Views/PaymentInfo.cshtml");
         }
 
         [NonAction]

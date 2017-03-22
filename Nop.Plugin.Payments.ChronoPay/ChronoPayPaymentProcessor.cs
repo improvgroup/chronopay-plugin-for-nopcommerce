@@ -28,6 +28,7 @@ namespace Nop.Plugin.Payments.ChronoPay
         private readonly ICurrencyService _currencyService;
         private readonly CurrencySettings _currencySettings;
         private readonly IWebHelper _webHelper;
+        private readonly ILocalizationService _localizationService;
 
         #endregion
 
@@ -35,13 +36,15 @@ namespace Nop.Plugin.Payments.ChronoPay
 
         public ChronoPayPaymentProcessor(ChronoPayPaymentSettings chronoPayPaymentSettings,
             ICurrencyService currencyService, CurrencySettings currencySettings, 
-            ISettingService settingService, IWebHelper webHelper)
+            ISettingService settingService, IWebHelper webHelper,
+            ILocalizationService localizationService)
         {
             this._chronoPayPaymentSettings = chronoPayPaymentSettings;
             this._currencyService = currencyService;
             this._currencySettings = currencySettings;
             this._settingService = settingService;
             this._webHelper = webHelper;
+            this._localizationService = localizationService;
         }
 
         #endregion
@@ -78,7 +81,7 @@ namespace Nop.Plugin.Payments.ChronoPay
             post.Add("product_name", _chronoPayPaymentSettings.ProductName);
             post.Add("product_price", string.Format(CultureInfo.InvariantCulture, "{0:0.00}", postProcessPaymentRequest.Order.OrderTotal));
             post.Add("product_price_currency", _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId).CurrencyCode);
-            post.Add("cb_url", string.Format("{0}Plugins/PaymentChronoPay/IPNHandler", _webHelper.GetStoreLocation(false)));
+            post.Add("cb_url", string.Format("{0}Plugins/PaymentChronoPay/IPNHandler", _webHelper.GetStoreLocation()));
             post.Add("cb_type", "P");
             post.Add("cs1", postProcessPaymentRequest.Order.Id.ToString());
             post.Add("f_name", postProcessPaymentRequest.Order.BillingAddress.FirstName);
@@ -265,6 +268,7 @@ namespace Nop.Plugin.Payments.ChronoPay
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect.Hint", "Enter shared secret.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee", "Additional fee");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.PaymentMethodDescription", "You will be redirected to ChronoPay site to complete the order.");
             
             base.Install();
         }
@@ -283,6 +287,7 @@ namespace Nop.Plugin.Payments.ChronoPay
             this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee");
             this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee.Hint");
+            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.PaymentMethodDescription");
             
             base.Uninstall();
         }
@@ -362,6 +367,14 @@ namespace Nop.Plugin.Payments.ChronoPay
         public bool SkipPaymentInfo
         {
             get { return false; }
+        }
+
+        /// <summary>
+        /// Gets a payment method description that will be displayed on checkout pages in the public store
+        /// </summary>
+        public string PaymentMethodDescription
+        {
+            get { return _localizationService.GetResource("Plugins.Payments.ChronoPay.PaymentMethodDescription"); }
         }
 
         #endregion
