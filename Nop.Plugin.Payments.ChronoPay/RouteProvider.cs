@@ -1,20 +1,19 @@
-﻿using System.Web.Mvc;
-using System.Web.Routing;
-using Nop.Web.Framework.Mvc.Routes;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.ChronoPay
 {
     public partial class RouteProvider : IRouteProvider
     {
-        public void RegisterRoutes(RouteCollection routes)
+        public void RegisterRoutes(IRouteBuilder routeBuilder)
         {
             //IPNHandler
-            routes.MapRoute("Plugin.Payments.ChronoPay.IPNHandler",
+            routeBuilder.MapRoute("Plugin.Payments.ChronoPay.IPNHandler",
                  "Plugins/PaymentChronoPay/IPNHandler",
-                 new { controller = "PaymentChronoPay", action = "IPNHandler" },
-                 new[] { "Nop.Plugin.Payments.ChronoPay.Controllers" }
-            );
+                 new { controller = "PaymentChronoPay", action = "IPNHandler" });
         }
+
         public int Priority
         {
             get

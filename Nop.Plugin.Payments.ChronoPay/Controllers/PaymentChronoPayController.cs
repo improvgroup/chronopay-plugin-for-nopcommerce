@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Web.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.ChronoPay.Models;
@@ -7,7 +6,10 @@ using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using Nop.Services.Security;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Payments.ChronoPay.Controllers
 {
@@ -20,13 +22,15 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
         private readonly ChronoPayPaymentSettings _chronoPayPaymentSettings;
         private readonly PaymentSettings _paymentSettings;
         private readonly ILocalizationService _localizationService;
+        private readonly IPermissionService _permissionService;
 
         public PaymentChronoPayController(ISettingService settingService, 
             IPaymentService paymentService, IOrderService orderService, 
             IOrderProcessingService orderProcessingService, 
             ChronoPayPaymentSettings chronoPayPaymentSettings,
             PaymentSettings paymentSettings,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            IPermissionService permissionService)
         {
             this._settingService = settingService;
             this._paymentService = paymentService;
@@ -35,12 +39,16 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
             this._chronoPayPaymentSettings = chronoPayPaymentSettings;
             this._paymentSettings = paymentSettings;
             this._localizationService = localizationService;
+            this._permissionService = permissionService;
         }
-        
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure()
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure()
         {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePaymentMethods))
+                return AccessDeniedView();
+
             var model = new ConfigurationModel
             {
                 GatewayUrl = _chronoPayPaymentSettings.GatewayUrl,
@@ -54,10 +62,13 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
         }
 
         [HttpPost]
-        [AdminAuthorize]
-        [ChildActionOnly]
-        public ActionResult Configure(ConfigurationModel model)
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        public IActionResult Configure(ConfigurationModel model)
         {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePaymentMethods))
+                return AccessDeniedView();
+
             if (!ModelState.IsValid)
                 return Configure();
 
@@ -74,35 +85,14 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
             return Configure();
         }
 
-        [ChildActionOnly]
-        public ActionResult PaymentInfo()
+        public ActionResult IPNHandler()
         {
-            return View("~/Plugins/Payments.ChronoPay/Views/PaymentInfo.cshtml");
-        }
-
-        [NonAction]
-        public override IList<string> ValidatePaymentForm(FormCollection form)
-        {
-            var warnings = new List<string>();
-            return warnings;
-        }
-
-        [NonAction]
-        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
-        {
-            var paymentInfo = new ProcessPaymentRequest();
-            return paymentInfo;
-        }
-
-        [ValidateInput(false)]
-        public ActionResult IPNHandler(FormCollection form)
-        {
+            var form = Request.Form;
             var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.ChronoPay") as ChronoPayPaymentProcessor;
             if (processor == null || !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
                 throw new NopException("ChronoPay module cannot be loaded");
-            int orderId;
 
-            if (HostedPaymentHelper.ValidateResponseSign(form, _chronoPayPaymentSettings.SharedSecrect) && int.TryParse(form["cs1"], out orderId))
+            if (HostedPaymentHelper.ValidateResponseSign(form, _chronoPayPaymentSettings.SharedSecrect) && int.TryParse(form["cs1"], out int orderId))
             {
                 var order = _orderService.GetOrderById(orderId);
                 if (order != null && _orderProcessingService.CanMarkOrderAsPaid(order))
@@ -110,6 +100,7 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
                     _orderProcessingService.MarkOrderAsPaid(order);
                 }
             }
+
             return RedirectToAction("Index", "Home", new { area = "" });
         }
     }
