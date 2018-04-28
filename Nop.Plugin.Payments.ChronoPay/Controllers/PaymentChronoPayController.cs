@@ -85,9 +85,9 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
             return Configure();
         }
 
-        public ActionResult IPNHandler()
+        public ActionResult IPNHandler(IpnModel model)
         {
-            var form = Request.Form;
+            var form = model.Form;
             var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.ChronoPay") as ChronoPayPaymentProcessor;
             if (processor == null || !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
                 throw new NopException("ChronoPay module cannot be loaded");
