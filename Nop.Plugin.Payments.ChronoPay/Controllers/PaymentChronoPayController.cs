@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
-using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.ChronoPay.Models;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -15,31 +14,26 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
 {
     public class PaymentChronoPayController : BasePaymentController
     {
-        private readonly ISettingService _settingService;
-        private readonly IPaymentService _paymentService;
+        private readonly ILocalizationService _localizationService;
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
-        private readonly ChronoPayPaymentSettings _chronoPayPaymentSettings;
-        private readonly PaymentSettings _paymentSettings;
-        private readonly ILocalizationService _localizationService;
+        private readonly IPaymentService _paymentService;
         private readonly IPermissionService _permissionService;
+        private readonly ISettingService _settingService;
+        private readonly ChronoPayPaymentSettings _chronoPayPaymentSettings;
 
-        public PaymentChronoPayController(ISettingService settingService, 
-            IPaymentService paymentService, IOrderService orderService, 
-            IOrderProcessingService orderProcessingService, 
-            ChronoPayPaymentSettings chronoPayPaymentSettings,
-            PaymentSettings paymentSettings,
-            ILocalizationService localizationService,
-            IPermissionService permissionService)
+        public PaymentChronoPayController(ILocalizationService localizationService,
+            IOrderService orderService, IOrderProcessingService orderProcessingService,
+            IPaymentService paymentService, IPermissionService permissionService,
+            ISettingService settingService, ChronoPayPaymentSettings chronoPayPaymentSettings)
         {
-            this._settingService = settingService;
-            this._paymentService = paymentService;
+            this._localizationService = localizationService;
             this._orderService = orderService;
             this._orderProcessingService = orderProcessingService;
-            this._chronoPayPaymentSettings = chronoPayPaymentSettings;
-            this._paymentSettings = paymentSettings;
-            this._localizationService = localizationService;
+            this._paymentService = paymentService;
             this._permissionService = permissionService;
+            this._settingService = settingService;
+            this._chronoPayPaymentSettings = chronoPayPaymentSettings;
         }
 
         [AuthorizeAdmin]
@@ -89,7 +83,7 @@ namespace Nop.Plugin.Payments.ChronoPay.Controllers
         {
             var form = model.Form;
             var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.ChronoPay") as ChronoPayPaymentProcessor;
-            if (processor == null || !processor.IsPaymentMethodActive(_paymentSettings) || !processor.PluginDescriptor.Installed)
+            if (processor == null || !_paymentService.IsPaymentMethodActive(processor) || !processor.PluginDescriptor.Installed)
                 throw new NopException("ChronoPay module cannot be loaded");
 
             if (HostedPaymentHelper.ValidateResponseSign(form, _chronoPayPaymentSettings.SharedSecrect) && int.TryParse(form["cs1"], out int orderId))

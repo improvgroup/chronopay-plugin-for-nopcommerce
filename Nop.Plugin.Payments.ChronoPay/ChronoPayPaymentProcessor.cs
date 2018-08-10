@@ -7,7 +7,6 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Plugins;
-using Nop.Plugin.Payments.ChronoPay.Controllers;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
@@ -24,27 +23,27 @@ namespace Nop.Plugin.Payments.ChronoPay
         #region Fields
 
         private readonly ChronoPayPaymentSettings _chronoPayPaymentSettings;
-        private readonly ISettingService _settingService;
         private readonly ICurrencyService _currencyService;
-        private readonly CurrencySettings _currencySettings;
-        private readonly IWebHelper _webHelper;
         private readonly ILocalizationService _localizationService;
+        private readonly ISettingService _settingService;
+        private readonly IWebHelper _webHelper;
+        private readonly CurrencySettings _currencySettings;
 
         #endregion
 
         #region Ctor
 
         public ChronoPayPaymentProcessor(ChronoPayPaymentSettings chronoPayPaymentSettings,
-            ICurrencyService currencyService, CurrencySettings currencySettings, 
+            ICurrencyService currencyService, ILocalizationService localizationService,
             ISettingService settingService, IWebHelper webHelper,
-            ILocalizationService localizationService)
+            CurrencySettings currencySettings)
         {
             this._chronoPayPaymentSettings = chronoPayPaymentSettings;
             this._currencyService = currencyService;
-            this._currencySettings = currencySettings;
+            this._localizationService = localizationService;
             this._settingService = settingService;
             this._webHelper = webHelper;
-            this._localizationService = localizationService;
+            this._currencySettings = currencySettings;
         }
 
         #endregion
@@ -230,14 +229,9 @@ namespace Nop.Plugin.Payments.ChronoPay
             return paymentInfo;
         }
 
-        public void GetPublicViewComponent(out string viewComponentName)
+        public string GetPublicViewComponentName()
         {
-            viewComponentName = "PaymentChronoPay";
-        }
-
-        public Type GetControllerType()
-        {
-            return typeof(PaymentChronoPayController);
+            return "PaymentChronoPay";
         }
 
         public override void Install()
@@ -253,37 +247,40 @@ namespace Nop.Plugin.Payments.ChronoPay
             _settingService.SaveSetting(settings);
 
             //locales
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.RedirectionTip", "You will be redirected to ChronoPay site to complete the order.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl", "Gateway URL");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl.Hint", "Enter gateway URL.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId", "Product ID");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId.Hint", "Enter product ID.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName", "Product Name");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName.Hint", "Enter product Name.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect", "Shared secret");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect.Hint", "Enter shared secret.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee", "Additional fee");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.PaymentMethodDescription", "You will be redirected to ChronoPay site to complete the order.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.RedirectionTip", "You will be redirected to ChronoPay site to complete the order.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl", "Gateway URL");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl.Hint", "Enter gateway URL.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId", "Product ID");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId.Hint", "Enter product ID.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName", "Product Name");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName.Hint", "Enter product Name.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect", "Shared secret");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect.Hint", "Enter shared secret.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee", "Additional fee");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ChronoPay.PaymentMethodDescription", "You will be redirected to ChronoPay site to complete the order.");
             
             base.Install();
         }
 
         public override void Uninstall()
         {
+
+            _settingService.DeleteSetting<ChronoPayPaymentSettings>();
+
             //locales
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.RedirectionTip");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.PaymentMethodDescription");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.RedirectionTip");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.GatewayUrl.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductId.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.ProductName.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.SharedSecrect.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.AdditionalFee.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ChronoPay.PaymentMethodDescription");
             
             base.Uninstall();
         }
